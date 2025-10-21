@@ -1,0 +1,271 @@
+package org.file;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+public class PhotoRename {
+
+    /* Constantes */
+
+    //LIsta de archivos (ruta absoluta) que se van a renombrar
+    private static final String INFILES_DIR = "/home/evalle/Pictures/TMP/IN/";
+    private static final String OUT_DIR = "/home/evalle/Pictures/TMP/OUT/";
+
+
+    private static final String PHOTO_LIST = INFILES_DIR+"_list.txt";
+//                    "/home/evalle/Pictures/TMP/list.txt";
+    private static final String REVERSE_SH = INFILES_DIR+"_reverse.sh";
+    private static final String RENAME_SH = INFILES_DIR+"_rename.sh";
+
+
+    /* Auxiliares */
+    private static StringBuilder SbReverse, sbRename; //Contiene los elementos para renombrar en reversa (MV) [Y renombrar via terminal]
+    private static List noDupList;  //Contiene los nombres ya modificados
+    private static SimpleDateFormat dFormat;
+    private static int subIndex = 0;
+
+    public static void main(String[] args) {
+        SbReverse = sbRename = null;
+        noDupList = new ArrayList();
+        List<String> lsFile = readListaTxt(PHOTO_LIST);
+        try {
+            lsFile.forEach(filePath -> {
+                try {
+                    renombraArchivo(filePath); //System.out.println(filePath);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
+            });
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        System.out.format("\n \t lsFile.size= %d, noDupList.size=%d  (equals?)", lsFile.size(), noDupList.size());  //Deben ser iguales
+        if(SbReverse!=null){
+            System.out.println("\n\n"+SbReverse);
+            writeFile(REVERSE_SH, SbReverse.toString(), false);
+        }
+        if(sbRename != null ){
+//            System.out.println("\n\n"+sbRename);
+            writeFile(RENAME_SH, sbRename.toString(), false);
+        }
+    }
+
+    public static void renombraArchivo(String filePath) throws Exception {
+        System.out.format("\n <renombraArchivo> Path: %s %n", filePath);
+        if(SbReverse==null) { SbReverse = new StringBuilder();}
+        if(sbRename==null) { sbRename = new StringBuilder();}
+
+        String fileName = filePath.substring(filePath.lastIndexOf("/")+1);  // DSC_5476.JPG
+        String simpleName = fileName.substring( 0, fileName.lastIndexOf("."));
+        String extension = fileName.substring(fileName.lastIndexOf(".")+1);  // JPG
+        System.out.format("fileName: %s, simpleName: %s, extension: %s %n", fileName, simpleName, extension );
+
+        File file = new File(filePath);
+
+        String newFileName = getNewName(file, simpleName) + "." + extension; //getNewName(file, pOrigin)+ext;
+
+        System.out.format(" %s  ==>  %s %n ", fileName, newFileName);
+
+        // Renombra y mueve el archivo
+
+        if(moveFile(OUT_DIR, newFileName, file )){
+            System.out.format("new File: %s", (OUT_DIR+newFileName) );
+
+            //Proceso para reversa (Solo en lote)
+            SbReverse.append("mv ") // RENAMED  ORIGINAL
+                    .append(OUT_DIR).append(newFileName).append(" ").append(OUT_DIR).append( fileName ).append("\n");
+            sbRename.append("mv ")  //ORIGINAL  RENAMED
+                    .append(OUT_DIR).append( fileName ).append(" ").append(OUT_DIR).append(newFileName).append("\n");
+        }else{
+            System.err.println("Error moving "+ newFileName);
+            throw new Exception("Error moving file "+ newFileName );
+        } //*/
+    }
+
+    /**
+     * Obtiene el nuevo nombre con base en su fecha de creacion
+     * @param file
+     * @param simpleOriName
+     * @return
+     * @throws IOException
+     */
+    protected static String getNewName(File file, String simpleOriName) throws IOException {
+        String new_sName;
+        String camSrc ="", camPrefx = simpleOriName.substring(0, 4 ); // DSC_, IMG_, PXL_
+        int dComp =0, hComp = 0, mComp = 0;  //adds H hrs M mins, (-X to rest)
+        if(camPrefx.equals("IMG_")){
+            hComp = 0; mComp = 0;  //(IMG => Canon-Chinita)
+            camSrc ="-IMG";
+        }
+        else if(camPrefx.equals("DSC_")){
+            hComp = 4; mComp = 0;  //(DSC => Nikon)
+            dComp = 0;
+            // dComp =-1; hComp = 15; mComp = 42;  //(DSC => Nikon)
+            camSrc ="-DSC";
+        }
+        else if(camPrefx.equals("PXL_")){
+            hComp = 0; mComp = 0;  //(PXL => Pixel-7)
+            dComp = 0;
+            camSrc ="-PXL";
+        }
+
+        Path p = Paths.get(file.getAbsolutePath());
+        BasicFileAttributes attr
+                = Files.getFileAttributeView(p, BasicFileAttributeView.class)
+                .readAttributes();
+//        System.out.println( stMetadata(attr) ); /* Muestra metadatos de archivo */
+
+        Calendar c = Calendar.getInstance();
+        c.setTime( new Date( attr.creationTime().toMillis() ) );
+
+        // manipulate date
+//        c.add(Calendar.YEAR, 1); c.add(Calendar.MONTH, 1);
+        c.add(Calendar.DATE, dComp); //same with c.add(Calendar.DAY_OF_MONTH, 1);
+        c.add(Calendar.HOUR, hComp);
+        c.add(Calendar.MINUTE, mComp);
+//        c.add(Calendar.SECOND, 1);
+
+        int year = c.get(Calendar.YEAR),  month = c.get(Calendar.MONTH)+1, day= c.get(Calendar.DATE);
+
+        int hours = c.get(Calendar.HOUR_OF_DAY), mins=c.get(Calendar.MINUTE), secs =c.get(Calendar.SECOND); //Calendar.HOUR => 12 = 00
+
+        //Primer conversion a YYYYMMDD_hhmmss
+        new_sName = year + addZero( month ) + addZero( day ) +"_"+
+                addZero( hours ) + addZero( mins ) + addZero( secs );
+
+        //check duplicates::
+        subIndex = 2;
+        String tempName = new_sName + camSrc;
+        while(noDupList.contains (tempName) && subIndex <3000){
+            tempName = new_sName+ camSrc+"_"+subIndex;
+            subIndex++;
+        }
+        new_sName = tempName;
+
+        noDupList.add(new_sName);
+
+        return new_sName;
+    }
+
+/* ============================================================================================================== */
+
+    /*  Metodos auxiliares */
+    /**
+     * Lee un archivo y genera un List de cadenas read-*
+     * <b> Unicamente para leer el archivo de lista de CurriculumManagement </b>
+     * @param listaTxtPath
+     */
+    private static List<String> readListaTxt(String listaTxtPath){
+        List<String> lsRead = new ArrayList<String>();
+        try
+        {
+            BufferedReader infile = new BufferedReader(new FileReader(listaTxtPath));
+            String strLine;
+            while ((strLine = infile.readLine()) != null)
+            {
+                lsRead.add(strLine);
+            }
+            infile.close();
+        }
+        catch (IOException e)
+        {	//System.err.println("IOException "+e);
+            e.printStackTrace();
+        }
+
+        return lsRead;
+    }
+
+    /**
+     * Muestra los metadatos
+     * @param attr
+     * @return
+     */
+    private static String stMetadata(BasicFileAttributes attr) {
+
+        StringBuilder sb = new StringBuilder();
+        dFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss"); //Recibe fecha en Milisegundos: dFormat.format( 1667103436000 );
+
+        sb.append("Creation Date: ").append( dFormat.format( attr.creationTime().toMillis() ) ).append(" [").append(attr.creationTime()).append("]\n")
+                .append("creationMils: ").append(  attr.creationTime().toMillis() ).append("\n")
+                .append("lastAccessTime: ").append( dFormat.format( attr.lastAccessTime().toMillis() ) ).append(" [").append( attr.lastAccessTime() ).append("]\n")
+                .append("lastModifiedTime: ").append( dFormat.format( attr.lastModifiedTime().toMillis() ) ).append(" [").append( attr.lastModifiedTime() ).append("]\n")
+                .append("isDirectory: ").append(attr.isDirectory()).append("\n")
+                .append("isOther: ").append(attr.isOther()).append("\n")
+                .append("isRegularFile: ").append(attr.isRegularFile()).append("\n")
+                .append("isSymbolicLink: ").append(attr.isSymbolicLink()).append("\n")
+                .append("size: ").append(attr.size()).append("\n");
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( new Date( attr.creationTime().toMillis() ) );
+        int year = calendar.get(Calendar.YEAR),  month = calendar.get(Calendar.MONTH)+1, day= calendar.get(Calendar.DATE);
+        int hours = calendar.get(Calendar.HOUR_OF_DAY), mins=calendar.get(Calendar.MINUTE), secs =calendar.get(Calendar.SECOND); //Calendar.HOUR => 12 = 00
+        //System.out.format("Year: %d, Month: %d, Day: %d, Hour: %d, Minute: %d, Second: %d %n", year, month, day, hours, mins, secs );
+        sb.append("Date:: Year=").append(year).append(", Month=").append(month).append(", Day=").append(day)
+                .append(", hours=").append(hours).append(", mins=").append(mins).append(", secs=").append(secs).append("\n");
+        return sb.toString();
+    }
+
+    /**
+     * Move & Rename a File into a Folder
+     * @param dirToMove
+     * @param file
+     * @return
+     */
+    private static boolean moveFile(String dirToMove, String newName, File file){
+        boolean moved = false;
+        try{
+            // Destination directory
+            File dir = new File(dirToMove);
+
+            // Move file to new directory
+            moved = file.renameTo(new File(dir, newName ));
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        //System.out.println(" Moved " + moved );
+        return moved;
+    }
+
+    /**
+     * Escribe una cadena de texto en un archivo
+     * @param filePath ruta, nombre y extension  del archivo
+     * @param texto Cadena a agregar
+     * @param append agrega (true) o reemplaza (false)
+     */
+    private static void writeFile(String filePath, String texto, boolean append ){
+        BufferedWriter bufferedWriter;
+        if(null == texto){
+            return;
+        }
+        try {
+            //bufferedWriter = new BufferedWriter(new FileWriter(filePath, append));
+            bufferedWriter = new BufferedWriter (new OutputStreamWriter(new FileOutputStream(filePath, append),"UTF-8"));
+            bufferedWriter.write(texto);
+            bufferedWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Adds Zeros ( 0 => 00, 9 => 09, 59 => 59)
+     * @param number
+     * @return
+     */
+    private static String addZero(int number){
+        return number<1?"00":number<10?"0"+number:
+                ""+number;
+    }
+}
