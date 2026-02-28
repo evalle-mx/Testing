@@ -53,14 +53,15 @@ public class PhotoRenamer {
         pxlMins = 0;
 
         String fPath1 ="/home/netto/TEMP/PhotoTest/DSC_1150.JPG"; //Foto con camara (Nikon)
-        String fPath2 ="/home/netto/Pictures/2025/08-Aug/20250823_BayFront/PXL_20250823_000406410.jpg"; //Foto con camara (Pixel)
+        String fPath2 ="/home/netto/TEMP/PhotoTest/20231102_233018.jpg"; //Foto con camara (Pixel)
         String fechaBase = "2025-09-13 18:26:23"; /* Fecha especifica de la foto */
 
         try {
 //            showTimedName(fPath2); //USO pixel como referencia porque la hora es automatica
 //            syncFiles(fPath1, fPath2 , fechaBase);
 
-            makeMV_script( PHOTO_LIST );
+//            makeMV_script( PHOTO_LIST );
+            removeIMG( PHOTO_LIST, "Screenshot_");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -133,7 +134,6 @@ public class PhotoRenamer {
      */
     public static void makeMV_script(String pathListFile) throws Exception {
         System.out.println("lsFile = "+ pathListFile);
-        String mvLine;
         Path listPath = Paths.get(pathListFile);
         int lineNumber = 0;
 
@@ -144,8 +144,6 @@ public class PhotoRenamer {
             StringBuilder sbRev = new StringBuilder();
 
             while ((filepath = reader.readLine()) != null) {
-//                showTimedName(line);
-//                System.out.println("\n ____________  \n ");
                 cal = Calendar.getInstance();
                 cal.setTimeZone(tz);
                 path = Paths.get(filepath);
@@ -164,7 +162,7 @@ public class PhotoRenamer {
             System.out.println(sbMv.toString());
             FileMgr.exportToTxt(sbMv, outPutDir + mvFile);
             FileMgr.exportToTxt(sbRev, outPutDir+ mvReverseFile );
-            System.out.println("run: \n chmod +x movePhotos.sh \n ./movePhotos.sh");
+            System.out.printf("run: \n chmod +x %s \n ./%s", mvFile, mvFile);
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
         }
@@ -222,9 +220,7 @@ public class PhotoRenamer {
         }
 
         // --- 3. Print results ---
-//        System.out.println("Original File name: " + fileName);
-//        System.out.println("Extension: " + extension);
-//        System.out.println("Last three digits: " + lastThreeDigits);
+//        System.out.printf("Original File name: %s \nExtension: %s \nLast three digits: ", fileName, extension, lastThreeDigits);
 
         if(fileName.startsWith("PXL")){
             noDupCons = "PXL"+lastThreeDigits;
@@ -251,7 +247,6 @@ public class PhotoRenamer {
             noDupCons += "-night";
         }
 
-
         cal.setTime( new Date( newMilisTime) ); //lastModifiedTime is Taken time
         Date currentDatePlusOne = cal.getTime();
 
@@ -260,7 +255,6 @@ public class PhotoRenamer {
                 "_"+
                 addZero(cal.get(Calendar.HOUR_OF_DAY) +1 ) +addZero(cal.get(Calendar.MINUTE)) +addZero(cal.get(Calendar.SECOND));
         String mss = ""+cal.get(Calendar.MILLISECOND);
-
 
         String newFileName = datedNameSegm + noDupCons + "."+extension.toLowerCase();
 
@@ -274,7 +268,6 @@ public class PhotoRenamer {
         return newFileName;
     }
 
-
     /**
      * Adds Zeros ( 0 => 00, 9 => 09, 59 => 59)
      * @param number
@@ -283,6 +276,44 @@ public class PhotoRenamer {
     private static String addZero(int number){
         return number<1?"00":number<10?"0"+number:
                 ""+number;
+    }
+
+    /**
+     * Metodo que elimina una subcadena en nombres de archivo en una lista
+     * @param pathListFile
+     * @param subst
+     * @throws Exception
+     */
+    public static void removeIMG(String pathListFile, String subst) throws Exception {
+        System.out.printf("Removing %s from lsFile=%s", subst, pathListFile);
+
+        String outFile = "removeIMG.sh";
+        Path listPath = Paths.get(pathListFile);
+
+        int lineNumber = 0;
+
+        try (BufferedReader reader = Files.newBufferedReader(listPath)) {
+            String filepath, folder = "";
+
+            StringBuilder sbMv = new StringBuilder();
+            StringBuilder sbRev = new StringBuilder();
+
+            while ((filepath = reader.readLine()) != null) {
+                folder = filepath.substring(0, filepath.lastIndexOf("/") + 1);
+                String fileName = filepath.substring(filepath.lastIndexOf("/") + 1);
+                String newFileName = fileName.replace(subst, "");
+                sbMv.append("mv ").append(folder).append(fileName).append(" ").append(folder).append(newFileName).append("\n");
+                sbRev.append("mv ").append(folder).append(newFileName).append(" ").append(folder).append(fileName).append("\n");
+                System.out.println("Line " + ++lineNumber);
+            }
+            sbMv.append("echo '").append(lineNumber).append(" files in ").append(folder).append(" (should) be renamed!!'");
+            System.out.println(sbMv.toString());
+            FileMgr.exportToTxt(sbMv, outPutDir + outFile);
+            FileMgr.exportToTxt(sbRev, outPutDir + mvReverseFile);
+            System.out.printf("Run: \n chmod +x %s \n./%s ", outFile, outFile);
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
     }
 
 }

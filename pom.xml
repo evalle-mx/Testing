@@ -16,11 +16,19 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Source: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.21.1</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.drewnoakes</groupId>
                 <artifactId>metadata-extractor</artifactId>
                 <version>2.19.0</version>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 </project>

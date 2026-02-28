@@ -14,7 +14,7 @@ import java.util.*;
 
 public class FileMetadata {
 
-    private static final String PHOTO_LIST = "/home/evalle/Pictures/TMP/list.txt";
+//    private static final String PHOTO_LIST = "/home/evalle/Pictures/TMP/list.txt";
     private static SimpleDateFormat dFormat;
     private static StringBuilder sb;
     private static  Calendar calendar;
@@ -148,9 +148,9 @@ public class FileMetadata {
         String filePath =
 //                "/home/netto/TEMP/PhotoTest/DSC_1555.JPG";  // Oct16, 00:09:08
 //                "/home/netto/TEMP/PhotoTest/DSC_1437.JPG";  // 12:13:ss +-   [ 20251007_1213SSx ]
-                  "/home/netto/TEMP/PhotoTest/PXL_20251007_161320219.jpg";  // 12:13:ss [20251007_1213SSx]
+//                  "/home/netto/TEMP/PhotoTest/PXL_20251007_161320219.jpg";  // 12:13:ss [20251007_1213SSx]
 //                  "/home/netto/TEMP/PhotoTest/PXL_20251007_151902240.jpg"; // ==> 11:19:ss
-
+                "/home/netto/TEMP/PhotoTest/20231102_233018.jpg";
         try {
 //            testCalendar();
 //            displayFileDetails(filePath);
