@@ -1,0 +1,11 @@
+Player: Alice
+Score: 95
+Level: 10
+Accuracy: 0.88
+Status: Active
+
+Player: Bob
+Score: 72
+Level: 7
+Accuracy: 0.65
+Status: Inactive
