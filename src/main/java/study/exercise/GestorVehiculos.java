@@ -1,18 +1,22 @@
 /*
-Una casa de ventras de autos desea crear una aplicacion para gestionar los autos que tiene en inventario. para ello cuenta con datos de Modelo, Marca y Costo.
+Una casa de ventas de autos desea crear una aplicación para gestionar los autos que tiene en inventario. para ello cuenta con datos de Modelo, Marca y Costo.
 * VehiclesList.csv
 
 A partir de los datos lograr lo siguiente:
-- Leer la lista de vehiculos en archivo csv
+- Leer la lista de vehículos en archivo csv
 - Ordenar la lista por precio de menor a mayor (ASC o DESC) y desplegar en pantalla el resultado
-- Ordenar al mismo tiempo tanto por marca como por precio (ambos criterios simultaneamente) e imprimir resultado en pantalla
-- Extraer una lista de todos los vehiculos cuo precio no supere los 23,000
-- FIltrar unicamente los vehiculos de la marca Chevrolet y Volkswagen.
-- Mostrar todos los acutos cuyo modelo contenga por lo menos una letra 'A'
+- Ordenar al mismo tiempo tanto por marca como por precio (ambos criterios simultáneamente) e imprimir resultado en pantalla
+- Extraer una lista de todos los vehículos cuo precio no supere los 23,000
+- Filtrar unicamente los vehículos de la marca Chevrolet y Volkswagen.
+- Mostrar todos los autos cuyo modelo contenga por lo menos una letra 'A'
  */
 package study.exercise;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -20,7 +24,8 @@ import java.util.stream.Collectors;
 
 public class GestorVehiculos {
 
-    private static final String PATH_FILE = "/home/netto/Workspace/Java/Testing/src/main/resources/testfiles/VehiclesList.csv";
+    //private static final String PATH_FILE = "/Users/ernesto.valle/Workspace/Java/Testing/src/main/resources/testfiles/VehiclesList.csv";
+    private static final String REL_PATHFILE = "/testfiles/VehiclesList.csv";
 
     public record Vehicle(String marca, String modelo, Integer precio){}
 
@@ -53,7 +58,7 @@ public class GestorVehiculos {
             // 5) Mostrar todos los acutos cuyo modelo contenga por lo menos una letra 'A'
             String token = "A"; // case no sensitive
             System.out.println("   ++ Vehicles with " + token + " on the model :::");
-            displayWithStringContained(lsAutos,"A");
+            displayWithStringContained(lsAutos,token);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -67,17 +72,38 @@ public class GestorVehiculos {
      */
     protected static List<Vehicle> getLsAutos() throws IOException {
 
-        Path path = Path.of(PATH_FILE);
+//        Path path = Path.of(PATH_FILE);
+//        List<String> lsAutos = Files.readAllLines(path);
+////        lsAutos.forEach(System.out::println);
+//        List<Vehicle> lsVehicles = new ArrayList<>();
+//        lsAutos.forEach(
+//                linea -> {
+//                    String[] tokens = linea.split(",");
+//                    lsVehicles.add(new Vehicle(tokens[0], tokens[1], Integer.parseInt(tokens[2]) ) );
+//                }
+//        );
 
-        List<String> lsAutos = Files.readAllLines(path);
-//        lsAutos.forEach(System.out::println);
+        /**
+         * The following uses a secure `InputStream` with a relative path that should work in other device with no change
+         */
         List<Vehicle> lsVehicles = new ArrayList<>();
-        lsAutos.forEach(
-                linea -> {
-                    String[] tokens = linea.split(",");
-                    lsVehicles.add(new Vehicle(tokens[0], tokens[1], Integer.parseInt(tokens[2]) ) );
+        // Access the file relative to the resources root using the ClassLoader
+        try (InputStream inpSt = GestorVehiculos.class.getResourceAsStream(REL_PATHFILE)) {
+
+            if (inpSt == null) {
+                throw new IOException("Cannot find resource file at: " + REL_PATHFILE);
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inpSt, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] tokens = line.split(",");
+
+                    lsVehicles.add(new Vehicle(tokens[0], tokens[1], Integer.parseInt(tokens[2])));
                 }
-        );
+            }
+        }
+
         return lsVehicles;
     }
 
@@ -123,7 +149,7 @@ public class GestorVehiculos {
         lsVehicles.stream()
                 .filter(
                         auto -> {
-                            return token.toLowerCase().contains(auto.modelo().toLowerCase());
+                            return auto.modelo().toLowerCase().contains(token.toLowerCase());
                         }
                 ).forEach(System.out::println);
     }

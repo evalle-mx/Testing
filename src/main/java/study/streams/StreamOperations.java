@@ -10,7 +10,7 @@ public class StreamOperations {
 
     private static final List<String> lsNames = List.of("Diego", "Saul", "adrian", "Roberto","Sonja", "Brenda", "Sattina", "silvano", "Carlos");
 
-    private static final List<String> lsPaises = Arrays.asList("Canada, Armenia, Bolivia, Mexico, USA, Netherlands, Germany, Japan, Russia, North Corea, Argentina".split(", "));
+    private static final List<String> lsPaises = Arrays.asList("Canada, Armenia, Bolivia, Mexico, USA, Netherlands, Germany, Japan, Russia, North Corea, Laos, Luxemburgo, Argentina".split(", "));
 
     public static void main(String[] args) {
         /* Intermediate Operations */

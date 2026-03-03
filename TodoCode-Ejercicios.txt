@@ -1,0 +1,50 @@
+
+/*  ###### Gestor de Vehiculos (https://youtu.be/fXXoAhup4pM?si=mQtpv3vln1-2WtgB) ###### *
+[Streams, operations (filter, count, contains, comparing]
+
+Una casa de ventas de autos desea crear una aplicación para gestionar los autos que tiene en inventario. para ello cuenta con datos de Modelo, Marca y Costo.
+* VehiclesList.csv
+
+A partir de los datos lograr lo siguiente:
+- Leer la lista de vehículos en archivo csv
+- Ordenar la lista por precio de menor a mayor (ASC o DESC) y desplegar en pantalla el resultado
+- Ordenar al mismo tiempo tanto por marca como por precio (ambos criterios simultáneamente) e imprimir resultado en pantalla
+- Extraer una lista de todos los vehículos cuo precio no supere los 23,000
+- Filtrar unicamente los vehículos de la marca Chevrolet y Volkswagen.
+- Mostrar todos los autos cuyo modelo contenga por lo menos una letra 'A'
+
+____________________________________________________________________________________________________________
+
+ /* ######  Ejercicio Envios Clientes Paqueteria (https://youtu.be/lQwF4fI9TgI)  ########### */
+ [Optionals (Nulls) + Lambdas + Streams]
+
+ Una empresa de paqueteria posee almacenados los datos de sus diferentes clientes [Numero_cliente, nombre, apellido, direccion, telefono].
+ Estos datos son utilizados cada vez que el cliente lleva a cabo un nuevo envio.
+ Sin embargo, hay clientes que poseen el campo de direccion sin completar (null), dado que anteriormente el sistema no lo consideraba obligatorio.
+
+ Al buscar una direccion para crear un nuevo envio, puede pasar que la misma No EXISTA.
+
+ Actualmente el sistema arroja un error de tipo "NullPointerException" cada vez que se busca un cliente sin direccion
+
+ Se desea que el sistema sea capaz de informar cuando un cliente tenga este dato Vacio sin arroar un error/Excepcion
+____________________________________________________________________________________________________________
+
+/*  ###### Ejercicio Integrador Supermercado (https://www.youtube.com/watch?v=ElwZJVBCnGU) ###### *
+[ ]
+
+Se necesita el desarrollo de una aplicación para gestionar productos en un supermercado.
+
+Cada producto tiene un
+- nombre
+- Categoria (frutas, lacteos, panaderia, etc)
+- cantidad
+- Precio
+
+Se pide un programa para realizar las siguientes operaciones usando Lambdas, Streams, referencias a metodos y collectors
+
+* Filtrar los productos de la categoria "Frutas"
+* Calcular el precio total de todos los productos en la categoria "Lacteos"
+* Obtener el producto con el precio mas bajo
+* Agrupar los productos por categoria
+* Calcular el precio promedio de los productos de cada categoria y mostrar la categoria con el precio promedio mas alto
+  -- Al ser una solicitud que puede manejar muchos datos y puede demorar se sugiere utilizar Parallel Streams
